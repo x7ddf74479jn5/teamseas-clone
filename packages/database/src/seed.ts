@@ -1,36 +1,23 @@
 import { prisma } from ".";
 
-import type { User } from "@prisma/client";
+async function main() {
+  await prisma.donation.deleteMany();
+  const alice = await prisma.donation.create({
+    data: {
+      email: "alisce@prisma.io",
+      displayName: "Alice",
+      count: 5,
+    },
+  });
 
-const DEFAULT_USERS = [
-  // Add your own user to pre-populate the database with
-  {
-    name: "Tim Apple",
-    email: "tim@apple.com",
-  },
-] as Array<Partial<User>>;
+  console.log({ alice });
+}
 
-(async () => {
-  try {
-    await Promise.all(
-      DEFAULT_USERS.map((user) =>
-        prisma.user.upsert({
-          where: {
-            email: user.email!,
-          },
-          update: {
-            ...user,
-          },
-          create: {
-            ...user,
-          },
-        })
-      )
-    );
-  } catch (error) {
-    console.error(error);
+main()
+  .catch((e) => {
+    console.error(e);
     process.exit(1);
-  } finally {
+  })
+  .finally(async () => {
     await prisma.$disconnect();
-  }
-})();
+  });
