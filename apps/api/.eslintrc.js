@@ -1,1 +1,6 @@
-module.exports = require('./packages/config/eslint-api.js');
+const defaultConfig = require("config/eslint-server");
+
+module.exports = {
+  root: true,
+  ...defaultConfig,
+};
