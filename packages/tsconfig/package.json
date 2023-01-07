@@ -8,6 +8,8 @@
   },
   "files": [
     "base.json",
-    "node16.json"
+    "node16.json",
+    "ui.json",
+    "api.json"
   ]
 }
