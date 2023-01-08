@@ -1,34 +1,94 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import "@fontsource/montserrat/700.css";
+import "@fontsource/montserrat/400.css";
+import "@fontsource/montserrat/300.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+import {
+  ChakraProvider,
+  Box,
+  Text,
+  VStack,
+  Grid,
+  Heading,
+} from "@chakra-ui/react";
+import { useQuery, useSubscription } from "urql";
+
+import { theme } from "./theme";
+import { Logo } from "./components/Logo";
+import { Counter } from "./components/donation/Counter";
+import { Leaderboard } from "./components/leaderboard/Leaderboard";
+import { DonationWizard } from "./components/donation/DonationWizard";
+
+type TotalDonationsQueryResponse = {
+  totalDonations: number;
+};
+
+const TotalDonationsQuery = `
+  query Query {
+    totalDonations
+  }
+`;
+
+type TotalUpdatedQuerySubscription = {
+  totalUpdated: { total: number };
+};
+
+const TotalUpdatedQuery = `
+  subscription Subscription {
+    totalUpdated {
+      total
+    }
+  }
+`;
+
+const handleSubscription = (
+  _previous: number | undefined,
+  newTotal: TotalUpdatedQuerySubscription,
+) => {
+  return newTotal?.totalUpdated?.total;
+};
+
+const App = () => {
+  const [res] = useSubscription<TotalUpdatedQuerySubscription, number>(
+    { query: TotalUpdatedQuery },
+    handleSubscription,
+  );
+  const [{ data, fetching, error }] = useQuery<TotalDonationsQueryResponse>({
+    query: TotalDonationsQuery,
+  });
+
+  const counterTo = res.data || data?.totalDonations;
+
+  if (fetching) return <p>Loading...</p>;
+  if (error) return <p>Oh no... {error.message}</p>;
 
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
-}
+    <ChakraProvider theme={theme}>
+      <Box textAlign="center" fontSize="xl">
+        <Grid minH="100vh" p={3} bg="gray.50">
+          <VStack spacing={8}>
+            <Logo h="32" pointerEvents="none" />
+            <Heading as="h1" size="xl">
+              JOIN THE MOVEMENT!
+            </Heading>
+            <Text>
+              The team is growing everyday and scoring wins for the planet.
+              <br /> Remove trash with us and track our progress!
+            </Text>
 
-export default App
+            {counterTo && (
+              <Heading as="h2" size="4xl">
+                <Counter from={0} to={counterTo} />
+              </Heading>
+            )}
+
+            <DonationWizard />
+
+            <Leaderboard />
+          </VStack>
+        </Grid>
+      </Box>
+    </ChakraProvider>
+  );
+};
+
+export default App;
